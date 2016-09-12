@@ -291,8 +291,8 @@ yane_count = 0
 
 # 傾斜屋根タイプのデータ数の算出
 for (i in 1:counter) {
-  yanetype = data[i, 10]
-  vertex_data = data[i, 25]
+  yanetype = data[i, 12]
+  vertex_data = data[i, 27]
   if ((yanetype != 0) && (vertex_data == 10)) {
     roof_count = roof_count + 1
   }
