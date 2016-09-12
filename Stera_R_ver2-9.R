@@ -342,25 +342,26 @@ for (i in 1:counter) {
   hyoukou = data[i, 2]    # 地盤高データの読み込み
   youto = data[i, 6]      # 建物用途データの読み込み
   story = data[i, 8]      # 階数データの読み込み
-  yanetype = data[i, 10]  # 屋根タイプの読み込み
-  incline = data[i, 12]   # 屋根勾配データの読み込み
-  hiratuma = data[i, 14]  # 平入り・妻入りデータの読み込み
-  yanemuki = data[i, 16]  # 流れ方向の読み込み
-  hisashi = data[i, 18]   # 軒庇の長さの読み込み
-  keraba = data[i, 20]    # けらば幅の読み込み
-  yaneatu = data[i, 22]   # 屋根厚さの読み込み
-  zoning = data[i, 24]    # 用途地域の読み込み
+  basement = data[i, 10]  # 地下階数データの読み込み
+  yanetype = data[i, 12]  # 屋根タイプの読み込み
+  incline = data[i, 14]   # 屋根勾配データの読み込み
+  hiratuma = data[i, 16]  # 平入り・妻入りデータの読み込み
+  yanemuki = data[i, 18]  # 流れ方向の読み込み
+  hisashi = data[i, 20]   # 軒庇の長さの読み込み
+  keraba = data[i, 22]    # けらば幅の読み込み
+  yaneatu = data[i, 24]   # 屋根厚さの読み込み
+  zoning = data[i, 26]    # 用途地域の読み込み
   # col_rgb[i] = "1 1 1 1"  # colorのデフォルト設定
   col_rgb[i] = F_zone_color (zoning, i)   # 関数によるcolor値(RGB)の読み込み
   
   # 頂点座標の配列変数の準備と読み込み
-  vertex = data[i, 25] / 2  # 頂点数（屋根形態に応じる）
+  vertex = data[i, 27] / 2  # 頂点数（屋根形態に応じる）
   coordinate = array(dim = c(vertex, 3))
   dim(coordinate)
   for (j in 1:vertex) {
-    x = 26 + 2 * (j - 1)
+    x = 28 + 2 * (j - 1)
     coordinate[j, 1] = data[i, x]
-    y = 27 + 2 * (j - 1)
+    y = 29 + 2 * (j - 1)
     coordinate[j, 2] = data[i, y]
     coordinate[j, 3] = hyoukou
   }
