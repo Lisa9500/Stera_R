@@ -420,14 +420,19 @@ for (i in 1:counter) {
     # 底面座標（ｍ→ inch）
     xb[j] = coordinate[j, 1] / kansan
     yb[j] = coordinate[j, 2] / kansan
-    # 地下部分を追加するため，底面のZ座標を地下部分の深さだけ下げる
-    # ３階建て以下は根入れ深さを30cmとし，４階建て以上は階高の1/3の1ｍとする
-    if (story <= 3) {
-      zb[j] = (coordinate[j, 3] - 0.3) / kansan
-    } else if (story > 3) {
-      zb[j] = (coordinate[j, 3] - 1.0) / kansan
-    }
     
+    # 地下階がある場合は階数に応じてZ座標を地下階部分の深さだけ下げる
+    if (basement >= 1) {
+      zb[j] = (coordinate[j, 3] - 3.0 * basement) / kansan
+    } else if (basement <= 0) {
+      # 地下階がない場合は，３階建て以下は根入れ深さを30cmとし，４階建て以上は階高の1/3の1ｍとする
+      if (story <= 3) {
+        zb[j] = (coordinate[j, 3] - 0.3) / kansan
+      } else if (story > 3) {
+        zb[j] = (coordinate[j, 3] - 1.0) / kansan
+      }
+    }
+
     # 上面座標（ｍ→ inch）
     xt[j] = coordinate[j, 1] / kansan
     yt[j] = coordinate[j, 2] / kansan
