@@ -418,6 +418,49 @@ for (i in 1:counter) {
   xt = array(dim = c(vertex))
   yt = array(dim = c(vertex))
   zt = array(dim = c(vertex))
+  
+  # 内角がほぼ180°である頂点の削除
+  for (j in 1:vertex) {
+    if (j == 1) {
+      dist_1 = sqrt((coordinate[j, 1] - coordinate[vertex, 1])^2 + (coordinate[j, 2] - coordinate[vertex, 2])^2)
+      dist_2 = sqrt((coordinate[j+1, 1] - coordinate[j, 1])^2 + (coordinate[j+1, 2] - coordinate[j, 2])^2)
+      dist_3 = sqrt((coordinate[j+1, 1] - coordinate[vertex, 1])^2 + (coordinate[j+1, 2] - coordinate[vertex, 2])^2)
+    }
+    else if (j == vertex) {
+      dist_1 = sqrt((coordinate[j, 1] - coordinate[j-1, 1])^2 + (coordinate[j, 2] - coordinate[j-1, 2])^2)
+      dist_2 = sqrt((coordinate[1, 1] - coordinate[j, 1])^2 + (coordinate[1, 2] - coordinate[j, 2])^2)
+      dist_3 = sqrt((coordinate[1, 1] - coordinate[j-1, 1])^2 + (coordinate[1, 2] - coordinate[j-1, 2])^2)
+    }
+    else {
+      dist_1 = sqrt((coordinate[j, 1] - coordinate[j-1, 1])^2 + (coordinate[j, 2] - coordinate[j-1, 2])^2)
+      dist_2 = sqrt((coordinate[j+1, 1] - coordinate[j, 1])^2 + (coordinate[j+1, 2] - coordinate[j, 2])^2)
+      dist_3 = sqrt((coordinate[j+1, 1] - coordinate[j-1, 1])^2 + (coordinate[j+1, 2] - coordinate[j-1, 2])^2)
+    }
+    if ((dist_1 + dist_2) < dist_3 * 1.005) {
+      coordinate[j, 1] = 0
+      coordinate[j, 2] = 0
+    }
+  }
+  
+  new_coordi_x = array(dim = c(vertex))
+  new_coordi_y = array(dim = c(vertex))
+  coordi_count = 0
+  
+  for (j in 1:vertex) {
+    coordi_count = 0
+    if ((coordinate[j, 1] != 0) && (coordinate[j, 2] != 0)) {
+      coordi_count = coordi_count + 1
+      new_coordi_x[coordi_count] = coordinate[j, 1]
+      new_coordi_y[coordi_count] = coordinate[j, 2]
+    }
+  }
+  vertex = coordi_count
+  
+  for (j in 1:vertex) {
+    coordinate[j, 1] = new_coordi_x[j]
+    coordinate[j, 2] = new_coordi_y[j]
+  }
+  
   for (j in 1:vertex) {
     # 底面座標（ｍ→ inch）
     xb[j] = coordinate[j, 1] / kansan
