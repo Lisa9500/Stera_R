@@ -273,6 +273,8 @@ F_zone_color <- function (zoning, id) {
     col_rgb[i] = "0.749 0.886  0.906 1"
   } else if (zoning == 12) {
     col_rgb[i] = "0.314 0.420  0.678 1"
+  } else if (zoning == 0) {
+    col_rgb[i] = "1 1 1 1"
   }
 }
 
@@ -442,6 +444,10 @@ for (i in 1:counter) {
   # ４頂点建物モデルのモデリング
   if (vertex == 4) {
     # 建物本体のモデリング
+    xb_r = array(dim = c(4))  # 座標回転用の底面座標
+    yb_r = array(dim = c(4))
+    xt_r = array(dim = c(4))  # 座標回転用の上面座標
+    yt_r = array(dim = c(4))
     xk = array(dim = c(8))    # 切妻屋根・町家１階の家形頂点座標
     yk = array(dim = c(8))
     zk = array(dim = c(8))
@@ -449,9 +455,34 @@ for (i in 1:counter) {
     ym = array(dim = c(8))
     zm = array(dim = c(8))
     
+    # 平側と妻側の長さをチェックする
+    l_s1 = sqrt((xb[1] - xb[2])^2 + (yb[1] - yb[2])^2)
+    l_s2 = sqrt((xb[2] - xb[3])^2 + (yb[2] - yb[3])^2)
+    l_s3 = sqrt((xb[3] - xb[4])^2 + (yb[3] - yb[4])^2)
+    l_s4 = sqrt((xb[4] - xb[1])^2 + (yb[4] - yb[1])^2)
+    # 直線S1･s3が直線S2･s4より短い場合，平側と妻側を入れ替える
+    if ((l_s1 + l_s3) < (l_s2 + l_s4)) {
+      for (j in 1:4) {
+        xb_r[j] = xb[j]
+        yb_r[j] = yb[j]
+        xt_r[j] = xt[j]
+        yt_r[j] = yt[j]
+      }
+      for (j in 1:3) {
+        xb[j] = xb_r[j+1]
+        yb[j] = yb_r[j+1]
+        xt[j] = xt_r[j+1]
+        yt[j] = yt_r[j+1]
+      }
+      xb[4] = xb_r[1]
+      yb[4] = yb_r[1]
+      xt[4] = xt_r[1]
+      yt[4] = yt_r[1]
+    }
+    
     if (yanetype == 1) {
       ## 切妻屋根の家型のモデリング
-      # 切妻屋根は平入りを基本とし，hiratumaが2の場合は妻入りに入れ替える
+      # 切妻屋根は妻入りを基本とし，hiratumaが2の場合は平入りに入れ替える
       if (hiratuma == 2) {
         xb2 = array(dim = c(4))
         yb2 = array(dim = c(4))
@@ -1792,27 +1823,6 @@ for (i in 1:counter) {
       # yaneatuによる垂直方向の厚さ（軒側）
       kh = yaneatu / sqrt(1 + incline^2) / kansan
       
-      # 寄棟屋根の平側と妻側をチェックする
-      l_s1 = sqrt((xo[1] - xo[2])^2 + (yo[1] - yo[2])^2)
-      l_s2 = sqrt((xo[2] - xo[3])^2 + (yo[2] - yo[3])^2)
-      l_s3 = sqrt((xo[3] - xo[4])^2 + (yo[3] - yo[4])^2)
-      l_s4 = sqrt((xo[4] - xo[1])^2 + (yo[4] - yo[1])^2)
-      # 直線S1･s3が直線S2･s4より小さい場合，平側と妻側を入れ替える
-      if ((l_s1 + l_s3) < (l_s2 + l_s4)) {
-        xo2 = array(dim = c(4))
-        yo2 = array(dim = c(4))
-        for (j in 1:4) {
-          xo2[j] = xo[j]
-          yo2[j] = yo[j]
-        }
-        for (j in 1:3) {
-          xo[j] = xo2[j+1]
-          yo[j] = yo2[j+1]
-        }
-        xo[4] = xo2[1]
-        yo[4] = yo2[1]
-      }
-      
       # 軒上端の高さ（Z座標）
       zr[1] = zo[1] + kh
       zr[2] = zo[2] + kh
@@ -2054,27 +2064,6 @@ for (i in 1:counter) {
       
       # yaneatuによる垂直方向の厚さ（軒側）
       kh = yaneatu / sqrt(1 + incline^2) / kansan
-      
-      # 入母屋屋根の平側と妻側をチェックする
-      l_s1 = sqrt((xo[1] - xo[2])^2 + (yo[1] - yo[2])^2)
-      l_s2 = sqrt((xo[2] - xo[3])^2 + (yo[2] - yo[3])^2)
-      l_s3 = sqrt((xo[3] - xo[4])^2 + (yo[3] - yo[4])^2)
-      l_s4 = sqrt((xo[4] - xo[1])^2 + (yo[4] - yo[1])^2)
-      # 直線S1･s3が直線S2･s4より小さい場合，平側と妻側を入れ替える
-      if ((l_s1 + l_s3) < (l_s2 + l_s4)) {
-        xo2 = array(dim = c(4))
-        yo2 = array(dim = c(4))
-        for (j in 1:4) {
-          xo2[j] = xo[j]
-          yo2[j] = yo[j]
-        }
-        for (j in 1:3) {
-          xo[j] = xo2[j+1]
-          yo[j] = yo2[j+1]
-        }
-        xo[4] = xo2[1]
-        yo[4] = yo2[1]
-      }
       
       # 軒上端の高さ（Z座標）
       zr[1] = zo[1] + kh
