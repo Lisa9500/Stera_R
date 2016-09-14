@@ -1,4 +1,4 @@
-# Star_R ver.2.11  2016-09-14~
+# Star_R ver.2.10  2016-09-13~
 # ファイル読み込み--
 data <- read.csv(file.choose(), header=FALSE)
 
@@ -494,9 +494,6 @@ for (i in 1:counter) {
     coordinate[j, 2] = new_coordi_y[j]
   }
   
-  # 頂点が時計回りか反時計回りかを判断する
-  
-  
   for (j in 1:vertex) {
     # 底面座標（ｍ→ inch）
     xb[j] = coordinate[j, 1] / kansan
@@ -519,10 +516,6 @@ for (i in 1:counter) {
     yt[j] = coordinate[j, 2] / kansan
     zt[j] = (coordinate[j, 3] + height) / kansan
   }
-  
-  # 傾斜屋根建物のモデリング
-  # モデリングのための４頂点化
-  
   
   # ４頂点建物モデルのモデリング
   if (vertex == 4) {
