@@ -274,7 +274,7 @@ F_zone_color <- function (zoning, id) {
   } else if (zoning == 12) {
     col_rgb[i] = "0.314 0.420  0.678 1"
   } else if (zoning == 0) {
-    col_rgb[i] = "1 1 1 1"
+    col_rgb[i] = "1 1 1 1"  # colorのデフォルト設定
   }
 }
 
@@ -353,13 +353,11 @@ for (i in 1:counter) {
   keraba = data[i, 22]    # けらば幅の読み込み
   yaneatu = data[i, 24]   # 屋根厚さの読み込み
   zoning = data[i, 26]    # 用途地域の読み込み
-  # col_rgb[i] = "1 1 1 1"  # colorのデフォルト設定
   col_rgb[i] = F_zone_color (zoning, i)   # 関数によるcolor値(RGB)の読み込み
   
   # 頂点座標の配列変数の準備と読み込み
   vertex = data[i, 27] / 2  # 頂点数（屋根形態に応じる）
   coordinate = array(dim = c(vertex, 3))
-  dim(coordinate)
   for (j in 1:vertex) {
     x = 28 + 2 * (j - 1)
     coordinate[j, 1] = data[i, x]
@@ -380,8 +378,6 @@ for (i in 1:counter) {
   poly_mate_cnt = vertex + 2
   
   ## モデリング用頂点データの準備
-  # h = 3.3     # 階高3.3ｍ（仮設定）
-  # height = h * story
   # 傾斜屋根家屋の高さの計算
   if ((yanetype != 0) && (story <= 3)) {
     height = 3.25 + 2.5 * (story - 1)
@@ -418,44 +414,81 @@ for (i in 1:counter) {
   xt = array(dim = c(vertex))
   yt = array(dim = c(vertex))
   zt = array(dim = c(vertex))
+  coordina_2 = array(dim = c(vertex, 3))
+  
+  # 各頂点に削除するかどうかを判断するためのフラグを立てる
+  co_switch = array(dim = c(vertex))
+  for (j in 1:vertex) {
+    co_switch[j] = 1
+  }
   
   # 内角がほぼ180°である頂点の削除
   for (j in 1:vertex) {
+    next_co_x = coordinate[j+1, 1]
+    next_co_y = coordinate[j+1, 2]
+    prev_co_x = coordinate[j-1, 1]
+    prev_co_y = coordinate[j-1, 2]
+    
     if (j == 1) {
-      dist_1 = sqrt((coordinate[j, 1] - coordinate[vertex, 1])^2 + (coordinate[j, 2] - coordinate[vertex, 2])^2)
-      dist_2 = sqrt((coordinate[j+1, 1] - coordinate[j, 1])^2 + (coordinate[j+1, 2] - coordinate[j, 2])^2)
-      dist_3 = sqrt((coordinate[j+1, 1] - coordinate[vertex, 1])^2 + (coordinate[j+1, 2] - coordinate[vertex, 2])^2)
+      prev_co_x = coordinate[vertex, 1]
+      prev_co_y = coordinate[vertex, 2]
+      dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
+      dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
+      dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
     }
     else if (j == vertex) {
-      dist_1 = sqrt((coordinate[j, 1] - coordinate[j-1, 1])^2 + (coordinate[j, 2] - coordinate[j-1, 2])^2)
-      dist_2 = sqrt((coordinate[1, 1] - coordinate[j, 1])^2 + (coordinate[1, 2] - coordinate[j, 2])^2)
-      dist_3 = sqrt((coordinate[1, 1] - coordinate[j-1, 1])^2 + (coordinate[1, 2] - coordinate[j-1, 2])^2)
+      sw_num = j + 1 - vertex
+      while (co_switch[sw_num] == 0) {
+        sw_num = sw_num + 1
+      }
+      next_co_x = coordinate[1, 1]
+      next_co_y = coordinate[1, 2]
+      dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
+      dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
+      dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
     }
     else {
-      dist_1 = sqrt((coordinate[j, 1] - coordinate[j-1, 1])^2 + (coordinate[j, 2] - coordinate[j-1, 2])^2)
-      dist_2 = sqrt((coordinate[j+1, 1] - coordinate[j, 1])^2 + (coordinate[j+1, 2] - coordinate[j, 2])^2)
-      dist_3 = sqrt((coordinate[j+1, 1] - coordinate[j-1, 1])^2 + (coordinate[j+1, 2] - coordinate[j-1, 2])^2)
+      sw_num = j - 1
+      while (co_switch[sw_num] == 0) {
+        sw_num = sw_num - 1
+        if (sw_num < 1) {
+          sw_num = vertex
+        }
+      }
+      prev_co_x = coordinate[sw_num, 1]
+      prev_co_y = coordinate[sw_num, 2]
+
+      dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
+      dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
+      dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
     }
+    
     if ((dist_1 + dist_2) < dist_3 * 1.005) {
-      coordinate[j, 1] = 0
-      coordinate[j, 2] = 0
+      coordina_2[j, 1] = 0
+      coordina_2[j, 2] = 0
+      coordina_2[j, 3] = 0
+      co_switch[j] = 0
+    }
+    else {
+      coordina_2[j, 1] = coordinate[j, 1]
+      coordina_2[j, 2] = coordinate[j, 2]
+      coordina_2[j, 3] = coordinate[j, 3]
     }
   }
-  
+
   new_coordi_x = array(dim = c(vertex))
   new_coordi_y = array(dim = c(vertex))
   coordi_count = 0
-  
+
   for (j in 1:vertex) {
-    coordi_count = 0
-    if ((coordinate[j, 1] != 0) && (coordinate[j, 2] != 0)) {
+    if ((coordina_2[j, 1] != 0) && (coordina_2[j, 2] != 0)) {
       coordi_count = coordi_count + 1
-      new_coordi_x[coordi_count] = coordinate[j, 1]
-      new_coordi_y[coordi_count] = coordinate[j, 2]
+      new_coordi_x[coordi_count] = coordina_2[j, 1]
+      new_coordi_y[coordi_count] = coordina_2[j, 2]
     }
   }
   vertex = coordi_count
-  
+
   for (j in 1:vertex) {
     coordinate[j, 1] = new_coordi_x[j]
     coordinate[j, 2] = new_coordi_y[j]
@@ -854,7 +887,7 @@ for (i in 1:counter) {
       
       # 直線S1（頂点1→2）と直線S3（頂点3→4）に平行な直線の式の切片
       B = array(dim = c(4, 2))    # 平行な２直線の切片
-      Br = array(dim = c(2))      # xMaxの仮の切片
+      # Br = array(dim = c(2))      # xMaxの仮の切片
       bo = array(dim = c(4))      # 新しい切片の値
       # 直線S1－仮の切片による切片の差の比較
       B[1, 1] = br[1] + koutai2 / kansan * sqrt(a[1]^2 + 1)
