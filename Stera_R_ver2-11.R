@@ -356,9 +356,9 @@ for (i in 1:counter) {
   col_rgb[i] = F_zone_color (zoning, i)   # 関数によるcolor値(RGB)の読み込み
   
   # 頂点座標の配列変数の準備と読み込み
-  vertex = data[i, 27] / 2  # 頂点数（屋根形態に応じる）
-  coordinate = array(dim = c(vertex, 3))
-  for (j in 1:vertex) {
+  vertex_org = data[i, 27] / 2  # 頂点数（屋根形態に応じる）
+  coordinate = array(dim = c(vertex_org, 3))
+  for (j in 1:vertex_org) {
     x = 28 + 2 * (j - 1)
     coordinate[j, 1] = data[i, x]
     y = 29 + 2 * (j - 1)
@@ -367,15 +367,18 @@ for (i in 1:counter) {
   }
   # 起点と終点の頂点座標が完全一致する場合は，頂点のデータ数を１つ減らす
   # 傾斜屋根モデルの場合は5頂点を4頂点に変更してモデリングする
-  if ((coordinate[1, 1] == coordinate[vertex, 1]) && (coordinate[1, 2] == coordinate[vertex, 2])) {
-    vertex = vertex - 1
+  if ((coordinate[1, 1] == coordinate[vertex_org, 1]) && (coordinate[1, 2] == coordinate[vertex_org, 2])) {
+    vertex_tmp = vertex_org - 1
   }
-  botm_poly = vertex   # 底面の頂点数
-  top_poly = vertex    # 上面の頂点数
-  
-  ver_num = vertex * 4 + botm_poly + top_poly    # 面頂点数の総和
-  count = ver_num * 3                            # 座標データ数の総和
-  poly_mate_cnt = vertex + 2
+  else {
+    vertex_tmp = vertex_org
+  }
+  # botm_poly = vertex   # 底面の頂点数
+  # top_poly = vertex    # 上面の頂点数
+  # 
+  # ver_num = vertex * 4 + botm_poly + top_poly    # 面頂点数の総和
+  # count = ver_num * 3                            # 座標データ数の総和
+  # poly_mate_cnt = vertex + 2
   
   ## モデリング用頂点データの準備
   # 傾斜屋根家屋の高さの計算
@@ -408,41 +411,42 @@ for (i in 1:counter) {
     height = 3.3 * story
   }
   
-  xb = array(dim = c(vertex))
-  yb = array(dim = c(vertex))
-  zb = array(dim = c(vertex))
-  xt = array(dim = c(vertex))
-  yt = array(dim = c(vertex))
-  zt = array(dim = c(vertex))
-  coordina_2 = array(dim = c(vertex, 2))
+  xb = array(dim = c(vertex_tmp))
+  yb = array(dim = c(vertex_tmp))
+  zb = array(dim = c(vertex_tmp))
+  xt = array(dim = c(vertex_tmp))
+  yt = array(dim = c(vertex_tmp))
+  zt = array(dim = c(vertex_tmp))
+  coordina_2 = array(dim = c(vertex_tmp, 2))
   
   # 各頂点に削除するかどうかを判断するためのフラグを立てる
-  co_switch = array(dim = c(vertex))
-  for (j in 1:vertex) {
+  co_switch = array(dim = c(vertex_tmp))
+  for (j in 1:vertex_tmp) {
     co_switch[j] = 1
   }
-  
+
   # 内角がほぼ180°である頂点の削除
-  for (j in 1:vertex) {
+  for (j in 1:vertex_tmp) {
     next_co_x = coordinate[j+1, 1]
     next_co_y = coordinate[j+1, 2]
     prev_co_x = coordinate[j-1, 1]
     prev_co_y = coordinate[j-1, 2]
     
     if (j == 1) {
-      prev_co_x = coordinate[vertex, 1]
-      prev_co_y = coordinate[vertex, 2]
+      prev_co_x = coordinate[vertex_tmp, 1]
+      prev_co_y = coordinate[vertex_tmp, 2]
       dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
       dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
       dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
     }
-    else if (j == vertex) {
-      sw_num = j + 1 - vertex
+    else if (j == vertex_tmp) {
+      # sw_num = j + 1 - vertex_tmp
+      sw_num = 1
       while (co_switch[sw_num] == 0) {
         sw_num = sw_num + 1
       }
-      next_co_x = coordinate[1, 1]
-      next_co_y = coordinate[1, 2]
+      next_co_x = coordinate[sw_num, 1]
+      next_co_y = coordinate[sw_num, 2]
       dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
       dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
       dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
@@ -452,7 +456,7 @@ for (i in 1:counter) {
       while (co_switch[sw_num] == 0) {
         sw_num = sw_num - 1
         if (sw_num < 1) {
-          sw_num = vertex
+          sw_num = vertex_tmp
         }
       }
       prev_co_x = coordinate[sw_num, 1]
@@ -474,19 +478,26 @@ for (i in 1:counter) {
     }
   }
 
-  new_coordi_x = array(dim = c(vertex))
-  new_coordi_y = array(dim = c(vertex))
+  new_coordi_x = array(dim = c(vertex_tmp))
+  new_coordi_y = array(dim = c(vertex_tmp))
   coordi_count = 0
 
-  for (j in 1:vertex) {
+  for (j in 1:vertex_tmp) {
     if ((coordina_2[j, 1] != 0) && (coordina_2[j, 2] != 0)) {
       coordi_count = coordi_count + 1
       new_coordi_x[coordi_count] = coordina_2[j, 1]
       new_coordi_y[coordi_count] = coordina_2[j, 2]
     }
   }
-  vertex = coordi_count
-
+  
+  vertex = coordi_count   # 頂点削除後の頂点数
+  botm_poly = vertex      # 底面の頂点数
+  top_poly = vertex       # 上面の頂点数
+  
+  ver_num = vertex * 4 + botm_poly + top_poly    # 面頂点数の総和
+  count = ver_num * 3                            # 座標データ数の総和
+  poly_mate_cnt = vertex + 2
+  
   for (j in 1:vertex) {
     coordinate[j, 1] = new_coordi_x[j]
     coordinate[j, 2] = new_coordi_y[j]
@@ -499,8 +510,8 @@ for (i in 1:counter) {
   
   # 外積を計算する
   for (j in 1:vertex) {
-    xo = coordinate[j, 1]
-    yo = coordinate[j, 2]
+    xs = coordinate[j, 1]
+    ys = coordinate[j, 2]
     if (j == 1) {
       xp = coordinate[vertex, 1]
       yp = coordinate[vertex, 2]
@@ -519,7 +530,7 @@ for (i in 1:counter) {
       xn = coordinate[j+1, 1]
       yn = coordinate[j+1, 2]
     }
-    S = (xp - xo) * (yn - yo) - (yp - yo) * (xn - xo)
+    S = (xp - xs) * (yn - ys) - (yp - ys) * (xn - xs)
     
     # 外積の結果で左回りか右回りかを判断する
     if (S > 0) {
