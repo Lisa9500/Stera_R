@@ -427,12 +427,9 @@ for (i in 1:counter) {
 
   # 内角がほぼ180°である頂点の削除
   for (j in 1:vertex_tmp) {
-    next_co_x = coordinate[j+1, 1]
-    next_co_y = coordinate[j+1, 2]
-    prev_co_x = coordinate[j-1, 1]
-    prev_co_y = coordinate[j-1, 2]
-    
     if (j == 1) {
+      next_co_x = coordinate[j+1, 1]
+      next_co_y = coordinate[j+1, 2]
       prev_co_x = coordinate[vertex_tmp, 1]
       prev_co_y = coordinate[vertex_tmp, 2]
       dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
@@ -440,13 +437,14 @@ for (i in 1:counter) {
       dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
     }
     else if (j == vertex_tmp) {
-      # sw_num = j + 1 - vertex_tmp
       sw_num = 1
       while (co_switch[sw_num] == 0) {
         sw_num = sw_num + 1
       }
       next_co_x = coordinate[sw_num, 1]
       next_co_y = coordinate[sw_num, 2]
+      prev_co_x = coordinate[j-1, 1]
+      prev_co_y = coordinate[j-1, 2]
       dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
       dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
       dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
@@ -459,9 +457,10 @@ for (i in 1:counter) {
           sw_num = vertex_tmp
         }
       }
+      next_co_x = coordinate[j+1, 1]
+      next_co_y = coordinate[j+1, 2]
       prev_co_x = coordinate[sw_num, 1]
       prev_co_y = coordinate[sw_num, 2]
-
       dist_1 = sqrt((coordinate[j, 1] - prev_co_x)^2 + (coordinate[j, 2] - prev_co_y)^2)
       dist_2 = sqrt((next_co_x - coordinate[j, 1])^2 + (next_co_y - coordinate[j, 2])^2)
       dist_3 = sqrt((next_co_x - prev_co_x)^2 + (next_co_y - prev_co_y)^2)
@@ -478,6 +477,7 @@ for (i in 1:counter) {
     }
   }
 
+  # 頂点座標を削除した後の番号で並べなおす
   new_coordi_x = array(dim = c(vertex_tmp))
   new_coordi_y = array(dim = c(vertex_tmp))
   coordi_count = 0
@@ -508,6 +508,7 @@ for (i in 1:counter) {
   RH = 0  # 右回り（左側折れ）
   coordi_rev = array(dim = c(vertex, 2))
   
+  # 頂点座標の順番が反時計回りの場合は時計回りに変更する
   # 外積を計算する
   for (j in 1:vertex) {
     xs = coordinate[j, 1]
@@ -548,12 +549,13 @@ for (i in 1:counter) {
         coordi_rev[vertex - k + 1, 2] = coordinate[k, 2]
       }
       for (k in 1:vertex) {
-        coordinate[k, 1] = coordi_rev[vertex - k + 1, 1]
-        coordinate[k, 2] = coordi_rev[vertex - k + 1, 2]
+        coordinate[k, 1] = coordi_rev[k, 1]
+        coordinate[k, 2] = coordi_rev[k, 2]
       }
     }
   }
   
+  # 建物地下部分のモデリングのための地下深さの設定
   for (j in 1:vertex) {
     # 底面座標（ｍ→ inch）
     xb[j] = coordinate[j, 1] / kansan
@@ -576,10 +578,6 @@ for (i in 1:counter) {
     yt[j] = coordinate[j, 2] / kansan
     zt[j] = (coordinate[j, 3] + height) / kansan
   }
-  
-  # 傾斜屋根建物のモデリング
-  # モデリングのための４頂点化
-  
   
   # ４頂点建物モデルのモデリング
   if (vertex == 4) {
