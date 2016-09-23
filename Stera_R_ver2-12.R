@@ -53,6 +53,16 @@ F_bottom_plate <- function (vertex, xb, yb, zb) {
     write (bottom[j], "fileoutput.dae", append = TRUE)
   }
 }
+# 基面頂点座標の書き出し
+F_base_plate <- function (vertex, xb, yb, zbase) {
+  base = array(dim = c(vertex))
+  for (j in 1:vertex) {
+    base[j] = paste("\t\t\t\t\t\t", xb[j], yb[j], zbase[j])
+  }
+  for (j in 1:vertex){
+    write (base[j], "fileoutput.dae", append = TRUE)
+  }
+}
 # 側面頂点座標の書き出し
 F_side_plate <- function (vertex, xb, yb, zb, xt, yt, zt) {
   side = array(dim = c(vertex, 4))
@@ -411,6 +421,7 @@ for (i in 1:counter) {
   xt = array(dim = c(vertex_tmp))
   yt = array(dim = c(vertex_tmp))
   zt = array(dim = c(vertex_tmp))
+  zbase = array(dim = c(vertex_tmp))
   coordina_2 = array(dim = c(vertex_tmp, 2))
   
   # 各頂点に削除するかどうかを判断するためのフラグを立てる
@@ -487,10 +498,11 @@ for (i in 1:counter) {
   vertex = coordi_count   # 頂点削除後の頂点数
   botm_poly = vertex      # 底面の頂点数
   top_poly = vertex       # 上面の頂点数
+  base_poly = vertex      # 基本の頂点数
   
-  ver_num = vertex * 4 + botm_poly + top_poly    # 面頂点数の総和
-  count = ver_num * 3                            # 座標データ数の総和
-  poly_mate_cnt = vertex + 2
+  ver_num = vertex * 4 + botm_poly + top_poly + base_poly   # 面頂点数の総和
+  count = ver_num * 3                                       # 座標データ数の総和
+  poly_mate_cnt = vertex + 2 + 1
   
   for (j in 1:vertex) {
     coordinate[j, 1] = new_coordi_x[j]
@@ -554,6 +566,7 @@ for (i in 1:counter) {
     # 底面座標（ｍ→ inch）
     xb[j] = coordinate[j, 1] / kansan
     yb[j] = coordinate[j, 2] / kansan
+    zbase[j] = coordinate[j, 3] / kansan
     
     # 地下階がある場合は階数に応じてZ座標を地下階部分の深さだけ下げる
     if (basement >= 1) {
@@ -679,6 +692,9 @@ for (i in 1:counter) {
       # 底面頂点座標の書き出し
       F_bottom_plate (vertex, xb, yb, zb)
       
+      # 基面頂点座標の書き出し
+      F_base_plate (vertex, xb, yb, zbase)
+      
       # 側面頂点座標の書き出し
       side1 = array(dim = c(2, 4))
       side2 = array(dim = c(2, 5))
@@ -744,7 +760,17 @@ for (i in 1:counter) {
         p3 = c(xb[l], yb[l], zb[l])
         Nor = c(Nor, F_normal_vector (p1, p2, p3))
       }
-      
+      # 基面法線ベクトルの算出
+      for (j in 1:4) {
+        k = j - 1
+        l = j + 1
+        if (k == 0) {k = 4}
+        if (l > 4) {l = 1}
+        p1 = c(xb[k], yb[k], zbase[k])
+        p2 = c(xb[j], yb[j], zbase[j])
+        p3 = c(xb[l], yb[l], zbase[l])
+        Nor = c(Nor, F_normal_vector (p1, p2, p3))
+      }
       # 側面法線ベクトルの算出
       for (j in 1:4) {
         l = j + 1
@@ -857,8 +883,8 @@ for (i in 1:counter) {
       F_Nor_Tech_com (id)
       
       # vertices + polilystの書き出し
-      poly_mate_cnt = 1 + 4 + 2
-      vcnt = c(4, 4, 5, 4, 5, 4, 4)
+      poly_mate_cnt = 1 + 1 + 4 + 2
+      vcnt = c(4, 4, 4, 5, 4, 5, 4, 4)
       F_verti_polist (id)
     }
     
@@ -1056,6 +1082,9 @@ for (i in 1:counter) {
       # １階底面頂点座標の書き出し
       F_bottom_plate (4, xb, yb, zb)
       
+      # １階基面頂点座標の書き出し
+      F_base_plate (4, xb, yb, zbase)
+      
       # １階側面頂点座標の書き出し
       side1 = array(dim = c(2, 4))
       side2 = array(dim = c(2, 6))
@@ -1199,6 +1228,17 @@ for (i in 1:counter) {
         p1 = c(xb[k], yb[k], zb[k])
         p2 = c(xb[j], yb[j], zb[j])
         p3 = c(xb[l], yb[l], zb[l])
+        Nor = c(Nor, F_normal_vector (p1, p2, p3))
+      }
+      # １階基面法線ベクトルの算出
+      for (j in 1:4) {
+        k = j - 1
+        l = j + 1
+        if (k == 0) {k = 4}
+        if (l > 4) {l = 1}
+        p1 = c(xb[k], yb[k], zbase[k])
+        p2 = c(xb[j], yb[j], zbase[j])
+        p3 = c(xb[l], yb[l], zbase[l])
         Nor = c(Nor, F_normal_vector (p1, p2, p3))
       }
       
@@ -1460,11 +1500,12 @@ for (i in 1:counter) {
       F_Nor_Tech_com (id)
       
       # vertices + polilystの書き出し
-      poly_mate_cnt = 1 + 4 + 3 + 1 + 4 + 2
-      vcnt = c(4, 4, 6, 4, 6, 4, 4, 4, 4, 4, 5, 4, 5, 4, 4)
+      poly_mate_cnt = 1 + 1 + 4 + 3 + 1 + 4 + 2
+      vcnt = c(4, 4, 4, 6, 4, 6, 4, 4, 4, 4, 4, 5, 4, 5, 4, 4)
       F_verti_polist (id)
     }
     
+    # ４頂点の切妻・町家タイプ以外の建物モデリング
     else {
       # 片流れ屋根の上面頂点Z座標の算出
       s = array(dim = c(4))
@@ -1502,6 +1543,9 @@ for (i in 1:counter) {
       # 底面頂点座標の書き出し
       F_bottom_plate (vertex, xb, yb, zb)
       
+      # 基面頂点座標の書き出し
+      F_base_plate (vertex, xb, yb, zbase)
+      
       # 側面頂点座標の書き出し
       F_side_plate (vertex, xb, yb, zb, xt, yt, zt)
       
@@ -1526,6 +1570,18 @@ for (i in 1:counter) {
         p1 = c(xb[k], yb[k], zb[k])
         p2 = c(xb[j], yb[j], zb[j])
         p3 = c(xb[l], yb[l], zb[l])
+        Nor = c(Nor, F_normal_vector (p1, p2, p3))
+      }
+      
+      # 基面法線ベクトルの算出
+      for (j in 1:vertex) {
+        k = j - 1
+        l = j + 1
+        if (k == 0) {k = vertex}
+        if (l > vertex) {l = 1}
+        p1 = c(xb[k], yb[k], zbase[k])
+        p2 = c(xb[j], yb[j], zbase[j])
+        p3 = c(xb[l], yb[l], zbase[l])
         Nor = c(Nor, F_normal_vector (p1, p2, p3))
       }
       
@@ -1581,12 +1637,14 @@ for (i in 1:counter) {
       F_Nor_Tech_com (id)
       
       # vertices + polilystの書き出し
-      vcnt = c(vertex)
+      vcnt = c(vertex)        # 底面
+      vcnt = c(vcnt, vertex)  # 基面
+      # 側面
       for (j in 1:vertex) {
         vcnt = c(vcnt, 4)
       }
       vcnt = c(vcnt, vertex)
-      F_verti_polist (id)
+      F_verti_polist (id)     # 上面
     }
     
     ## 屋根タイプ別に屋根モデリング
@@ -3248,6 +3306,9 @@ else {  # (vertex != 4)
     # 底面頂点座標の書き出し
     F_bottom_plate (vertex, xb, yb, zb)
     
+    # 基面頂点座標の書き出し
+    F_base_plate (vertex, xb, yb, zbase)
+    
     # 側面頂点座標の書き出し
     F_side_plate (vertex, xb, yb, zb, xt, yt, zt)
     
@@ -3273,6 +3334,17 @@ else {  # (vertex != 4)
       p1 = c(xb[k], yb[k], zb[k])
       p2 = c(xb[j], yb[j], zb[j])
       p3 = c(xb[l], yb[l], zb[l])
+      Nor = c(Nor, F_normal_vector (p1, p2, p3))
+    }
+    # 基面法線ベクトルの算出
+    for (j in 1:vertex) {
+      k = j - 1
+      l = j + 1
+      if (k == 0) {k = vertex}
+      if (l > vertex) {l = 1}
+      p1 = c(xb[k], yb[k], zbase[k])
+      p2 = c(xb[j], yb[j], zbase[j])
+      p3 = c(xb[l], yb[l], zbase[l])
       Nor = c(Nor, F_normal_vector (p1, p2, p3))
     }
     
@@ -3328,6 +3400,7 @@ else {  # (vertex != 4)
     
     # vertices + polilystの書き出し
     vcnt = c(vertex)
+    vcnt = c(vcnt, vertex)
     for (j in 1:vertex) {
       vcnt = c(vcnt, 4)
     }
